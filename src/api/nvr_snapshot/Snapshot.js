@@ -1,17 +1,13 @@
-const express = require('express');
 const axios = require('axios');
 const crypto = require('crypto');
-
-const app = express();
-const port = 3000;
+const express = require('express');
+const cors = require('cors');
 
 // RTSP server details
-const channel = 2
-const rtspUrl = `http://36.92.168.180:10180/cgi-bin/snapshot.cgi?channel=2&subtype=1`;
+const rtspUrl = 'http://36.92.168.180:10180/cgi-bin/snapshot.cgi?channel=2&subtype=1';
 const username = 'admin';
 const password = 'telkomiot123';
 
-// Helper function to generate Digest Authorization Header
 function generateDigestAuthHeader(wwwAuthHeader, method, url, username, password) {
   const realm = wwwAuthHeader.match(/realm="([^"]+)"/)[1];
   const nonce = wwwAuthHeader.match(/nonce="([^"]+)"/)[1];
@@ -65,9 +61,4 @@ app.get('/fetch-image', async (req, res) => {
     console.error('Error fetching image:', error);
     res.status(500).send('Error fetching image');
   }
-});
-
-// Start the server
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
 });

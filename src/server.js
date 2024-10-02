@@ -1,9 +1,13 @@
 const express = require('express');
 const axios = require('axios');
 const crypto = require('crypto');
+const cors = require('cors');
 
 const app = express();
 const port = 3000;
+
+// Enable CORS for all routes
+app.use(cors()); // Mengizinkan semua origin
 
 // RTSP server details
 const rtspUrl = 'http://36.92.168.180:10180/cgi-bin/snapshot.cgi?channel=2&subtype=1';
@@ -34,6 +38,10 @@ function generateDigestAuthHeader(wwwAuthHeader, method, url, username, password
 
   return authHeader;
 }
+
+app.get('/', (req, res) => {
+  res.send('Hello, BANG!');
+})
 
 // Endpoint to fetch image
 app.get('/fetch-image', async (req, res) => {
