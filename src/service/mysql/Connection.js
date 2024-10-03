@@ -1,10 +1,10 @@
-import myql from 'mysql2';
+const mysql = require('mysql2');
 
-const Connection = myql.createConnection({
+const Connection = mysql.createConnection({
   host: 'localhost',
   user: 'root',
   password: '',
-  database: 'nvr_task_list'
+  database: 'nvr_middleware',
 });
 
 Connection.connect(function(error){

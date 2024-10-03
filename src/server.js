@@ -2,6 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const crypto = require('crypto');
 const cors = require('cors');
+const taskServiceRoutes = require('./service/mysql/taskService')
 
 const app = express();
 const port = 3000;
@@ -44,25 +45,7 @@ app.get('/', (req, res) => {
   res.send('Hello, BANG!');
 })
 
-// Route to handle form data sent via POST request
-app.post('/postTaskById', (req, res) => {
-  try {
-    const receivedData = req.body.data;
-
-    // Log the received data for debugging
-    console.log('Received data:', receivedData);
-
-    if (!receivedData) {
-      throw new Error('No data received');
-    }
-
-    // Send a JSON response
-    res.status(200).json({ message: `Data received: ${receivedData}` });
-  } catch (error) {
-    console.error('Error processing data:', error.message);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
+app.use(taskServiceRoutes);
 
 // Endpoint to fetch image
 app.get('/fetch-image', async (req, res) => {
