@@ -8,6 +8,7 @@ const port = 3000;
 
 // Enable CORS for all routes
 app.use(cors()); // Mengizinkan semua origin
+app.use(express.json());
 
 // RTSP server details
 const rtspUrl = 'http://36.92.168.180:10180/cgi-bin/snapshot.cgi?channel=2&subtype=1';
@@ -42,6 +43,26 @@ function generateDigestAuthHeader(wwwAuthHeader, method, url, username, password
 app.get('/', (req, res) => {
   res.send('Hello, BANG!');
 })
+
+// Route to handle form data sent via POST request
+app.post('/postTaskById', (req, res) => {
+  try {
+    const receivedData = req.body.data;
+
+    // Log the received data for debugging
+    console.log('Received data:', receivedData);
+
+    if (!receivedData) {
+      throw new Error('No data received');
+    }
+
+    // Send a JSON response
+    res.status(200).json({ message: `Data received: ${receivedData}` });
+  } catch (error) {
+    console.error('Error processing data:', error.message);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 // Endpoint to fetch image
 app.get('/fetch-image', async (req, res) => {
