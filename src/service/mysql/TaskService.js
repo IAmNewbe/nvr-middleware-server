@@ -18,8 +18,12 @@ router.post('/postTaskById', (req, res) => {
     taskData.id = id;
 
     // SQL query to insert the data into the serverData table
-    const sql = `INSERT INTO task_list (id, name, user, password, server, port, prefix, created_at, updated_at) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    const sql = `INSERT INTO task_list 
+    (
+      id, name, username, password, server, port, prefix, created_at, updated_at,
+      ftp_url, ftp_port, ftp_user, ftp_pass, ftp_dir, send_interval, status
+    ) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
     const values = [
       taskData.id,
@@ -30,7 +34,14 @@ router.post('/postTaskById', (req, res) => {
       taskData.port,
       taskData.prefix,
       created_at,
-      updated_at
+      updated_at,
+      taskData.ftp_url,
+      taskData.ftp_port,
+      taskData.ftp_user,
+      taskData.ftp_pass,
+      taskData.ftp_dir,
+      taskData.send_interval,
+      taskData.status, 
     ];
    
     // Execute the query
@@ -62,9 +73,7 @@ router.get('/getAllTasks', (req, res) => {
     res.status(200).json({ status: res.statusCode ,message: 'show All Tasks', data});
     // Log the results
     console.log('Data from table:', results);
-
-    // Close the connection
-    Connection.end();
+    console.log('time : ', new Date().getTime())
   });
 });
 

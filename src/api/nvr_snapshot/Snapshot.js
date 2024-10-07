@@ -1,13 +1,9 @@
-const axios = require('axios');
-const crypto = require('crypto');
 const express = require('express');
-const cors = require('cors');
+const axios = require('axios');
+const router = express.Router(); 
+const crypto = require('crypto');
 
-// RTSP server details
-const rtspUrl = 'http://36.92.168.180:10180/cgi-bin/snapshot.cgi?channel=2&subtype=1';
-const username = 'admin';
-const password = 'telkomiot123';
-
+// Helper function to generate Digest Authorization Header
 function generateDigestAuthHeader(wwwAuthHeader, method, url, username, password) {
   const realm = wwwAuthHeader.match(/realm="([^"]+)"/)[1];
   const nonce = wwwAuthHeader.match(/nonce="([^"]+)"/)[1];
@@ -32,9 +28,12 @@ function generateDigestAuthHeader(wwwAuthHeader, method, url, username, password
   return authHeader;
 }
 
-// Endpoint to fetch image
-app.get('/fetch-image', async (req, res) => {
+router.post('/fetch-image', async (req, res) => {
   try {
+    const { server, port, username, password, prefix } = req.body;
+
+    const rtspUrl = `http://${server}:${port}/${prefix}`;
+
     // Initial request to get WWW-Authenticate header
     const initialResponse = await axios.get(rtspUrl, { validateStatus: (status) => status === 401 });
 
@@ -44,7 +43,7 @@ app.get('/fetch-image', async (req, res) => {
     }
 
     // Generate Digest Authentication header
-    const digestAuthHeader = generateDigestAuthHeader(wwwAuthHeader, 'GET', '/cgi-bin/snapshot.cgi?channel=2&subtype=1', username, password);
+    const digestAuthHeader = generateDigestAuthHeader(wwwAuthHeader, 'GET', prefix, username, password);
 
     // Make the actual request with the Digest Authentication header
     const response = await axios.get(rtspUrl, {
@@ -62,3 +61,5 @@ app.get('/fetch-image', async (req, res) => {
     res.status(500).send('Error fetching image');
   }
 });
+
+module.exports = router;
