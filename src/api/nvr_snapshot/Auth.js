@@ -2,7 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const router = express.Router(); 
 const crypto = require('crypto');
-const e = require('cors');
+const app = express();
 
 // Helper function to generate Digest Authorization Header
 function generateDigestAuthHeader(wwwAuthHeader, method, url, username, password) {
@@ -29,11 +29,11 @@ function generateDigestAuthHeader(wwwAuthHeader, method, url, username, password
   return authHeader;
 }
 
-async function imageFetch(server, port, username, password, prefix) {
+async function imageFetch(server, port, username, password, prefix, res) {
 
   try {
     const rtspUrl = `http://${server}:${port}/${prefix}`;
-
+    console.log(rtspUrl);
     // Initial request to get WWW-Authenticate header
     const initialResponse = await axios.get(rtspUrl, { validateStatus: (status) => status === 401 });
 
@@ -54,9 +54,9 @@ async function imageFetch(server, port, username, password, prefix) {
     });
 
     // Send the image back to the client
-    res.setHeader('Content-Type', 'image/jpeg');
-    res.send(Buffer.from(response.data));
-    return response
+    // res.setHeader('Content-Type', 'image/jpeg');
+    // res.send(Buffer.from(response.data));
+    return response;
   } catch (error) {
     console.error('Error fetching image:', error);
     res.status(500).send('Error fetching image');

@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "proxy": "antarescam.id:21",
   "scripts": {
     "dev": "nodemon ./src/server.js"
   },

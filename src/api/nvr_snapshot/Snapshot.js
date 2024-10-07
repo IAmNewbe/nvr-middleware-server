@@ -40,6 +40,8 @@ router.post('/test-fetch-image', async (req, res) => {
     const wwwAuthHeader = initialResponse.headers['www-authenticate'];
     if (!wwwAuthHeader) {
       return res.status(500).send('Failed to retrieve digest authentication details');
+    } else {
+      console.log('success Authentication details');
     }
 
     // Generate Digest Authentication header

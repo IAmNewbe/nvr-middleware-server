@@ -1,48 +1,61 @@
 const express = require('express');
-const ftp = require('basic-ftp');
+// const ftp = require('basic-ftp');
+const ftp = require("ftp");
 const router = express.Router(); 
 const path = require('path');
 const { imageFetch } = require('../nvr_snapshot/Auth');
 
 // Function to upload a stream directly to FTP
-async function uploadStreamToFtp(stream, fileName, ftpConfig) {
-  // const ftpConfig = {
-  //     host: 'antarescam.id',
-  //     port: 21,
-  //     user: 'CCTV01KGqdwvRKHGnW',
-  //     password: 'lLZWZFhcdzaV',
-  // };
+async function uploadStreamToFtp(stream, fileName, ftpConfig, res) {
+  const client = new ftp();
 
-  const client = new ftp.Client();
+  console.log("stream : ", stream);
+  console.log(ftpConfig);
+  
+  client.on("ready", () => {
+    client.put(stream, fileName, (err) => {
+      if (err) {
+        console.error("Error uploading file:", err);
+      } 
+      console.log("File uploaded successfully!");
+    
+      client.end(); // Close the connection
+    });
+  })
 
-  try {
-      await client.access(ftpConfig);
-      await client.uploadFrom(stream, fileName); // Uploading the stream directly
-      console.log('File uploaded successfully:', fileName);
-  } catch (error) {
-      console.error('Error uploading file:', error);
-  } finally {
-      client.close();
-  }
+  client.on("error", (err) => {
+    console.error("FTP error:", err.message);
+    client.end();
+  });
+
+  client.connect(ftpConfig);
 }
 
 router.post('/test-upload-image', async (req, res) => {
-  const { server, port, username, password, prefix, ftp_url, ftp_port, ftp_user, ftp_pass, ftp_dir, send_interval } = req.body;
-  const response = imageFetch(server, port, username, password, prefix);
 
-  const ftpConfig = {
-    host: ftp_url,
-    port: ftp_port,
-    user: ftp_user,
-    password: ftp_pass,
-  };
-
-  const nameImg = new Date().toISOString();;
-
+  try {
+    const { server, port, username, password, prefix, ftp_url, ftp_port, ftp_user, ftp_pass, ftp_dir, send_interval } = req.body.data;
+    const ftpConfig = {
+      host: ftp_url,
+      port: ftp_port,
+      user: ftp_user,
+      password: ftp_pass,
+      passive: true,
+    };
+   
+    const response = await imageFetch(server, port, username, password, prefix, res);
+     
+    console.log(Buffer.from(response.data));
+    const nameImg = new Date().toISOString();
     // Use the response body stream directly for FTP upload
-  await uploadStreamToFtp(response.body, `${nameImg}.jpeg`, ftpConfig);
+    await uploadStreamToFtp(response.data, `/${nameImg}.jpg`, ftpConfig, res);
+    
+    res.send('Upload process has been initiated. Check the server logs for upload status.');
+  } catch (error) {
+    res.status(500).send('Error in image ftp.js fetching process');
+  }
   
-  res.send('Upload process has been initiated. Check the server logs for upload status.');
+    
 });
 
 // Route to start the upload process

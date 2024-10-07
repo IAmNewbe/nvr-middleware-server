@@ -49,7 +49,6 @@ router.post('/postTaskById', (req, res) => {
       if (err) {
         return console.error('Error inserting data:', err.message);
       }
-      console.log('Data inserted successfully:', results);
     });
     // Send a JSON response with the newly added task
     res.status(201).json({ status: res.statusCode ,message: 'Task added successfully', task: taskData });
@@ -71,9 +70,6 @@ router.get('/getAllTasks', (req, res) => {
     }
     const data = results;
     res.status(200).json({ status: res.statusCode ,message: 'show All Tasks', data});
-    // Log the results
-    console.log('Data from table:', results);
-    console.log('time : ', new Date().getTime())
   });
 });
 

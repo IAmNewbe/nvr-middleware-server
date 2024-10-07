@@ -12,12 +12,13 @@ const ftpConfig = {
 };
 
 // Local file path and remote destination path
-const localFilePath = path.join(__dirname, "tes.jpg");
-const remoteFilePath = "/tes.jpg";
-
+const localFilePath = path.join(__dirname, "tes3.jpg");
+const remoteFilePath = "/tes3.jpg";
+// console.log(fs.readFile(localFilePath));
 // Connect to the FTP server and upload the file
 client.on("ready", () => {
   fs.readFile(localFilePath, (err, data) => {
+    console.log(data);
     if (err) throw err;
     
     client.put(data, remoteFilePath, (err) => {
