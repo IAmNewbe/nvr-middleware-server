@@ -3,7 +3,8 @@ const axios = require('axios');
 const crypto = require('crypto');
 const cors = require('cors');
 const taskServiceRoutes = require('./service/mysql/taskService');
-const snapshotRoutes = require('./api/nvr_snapshot/Snapshot')
+const snapshotRoutes = require('./api/nvr_snapshot/Snapshot');
+const ftpRoutes = require('./api/ftp/ftp');
 
 const app = express();
 const port = 3000;
@@ -20,6 +21,7 @@ app.use(taskServiceRoutes);
 
 app.use(snapshotRoutes);
 
+app.use(ftpRoutes);
 // Start the server
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
