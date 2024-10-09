@@ -5,6 +5,7 @@ const cors = require('cors');
 const taskServiceRoutes = require('./service/mysql/taskService');
 const snapshotRoutes = require('./api/nvr_snapshot/Snapshot');
 const ftpRoutes = require('./api/ftp/ftp');
+const userRoutes = require('./service/mysql/UserService');
 
 const app = express();
 const port = 3000;
@@ -22,6 +23,8 @@ app.use(taskServiceRoutes);
 app.use(snapshotRoutes);
 
 app.use(ftpRoutes);
+
+app.use(userRoutes);
 // Start the server
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
