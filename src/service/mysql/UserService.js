@@ -56,5 +56,31 @@ router.get('/getAllUsers', (req, res) => {
   }
 })
 
+// DELETE route to delete a user by ID
+router.delete('/deleteUser/:username', (req, res) => {
+  try {
+    const userId = req.params.username; // Get the user ID from the request parameters
+
+    // SQL query to delete the user by ID
+    const sql = 'DELETE FROM users WHERE username = ?';
+
+    // Execute the query
+    Connection.query(sql, [userId], (err, result) => {
+      if (err) throw err;
+
+      // If no rows were affected, the user with the given ID was not found
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ status: res.statusCode, message: 'User not found' });
+      }
+
+      // If the deletion was successful
+      res.status(200).json({ status: res.statusCode, message: 'User deleted successfully' });
+    });
+  } catch (err) {
+    console.error("error deleting user: ", err);
+    res.status(500).json({ status: res.statusCode, message: 'Internal Server Error' });
+  }
+});
+
 module.exports = router; // Export the router instance
 

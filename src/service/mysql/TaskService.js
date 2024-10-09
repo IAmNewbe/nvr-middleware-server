@@ -58,6 +58,20 @@ router.post('/postTaskById', (req, res) => {
   }
 });
 
+// DELETE route to delete a task by ID
+router.delete('/deleteTaskById/:id', (req, res) => {
+  
+  const id = req.params.id;
+  const sql = 'DELETE FROM task_list WHERE id = ?';
+  Connection.query(sql, [id], (err) => {
+    if (err) {
+      return res.status(500).json({ error: 'Error deleting task' });
+    }
+    // If the deletion was successful
+    res.status(200).json({ status: res.statusCode, message: 'Task deleted successfully' });
+  });
+});
+
 // GET route to retrieve all tasks
 router.get('/getAllTasks', (req, res) => {
   // Query to get all data from the table
@@ -72,5 +86,7 @@ router.get('/getAllTasks', (req, res) => {
     res.status(200).json({ status: res.statusCode ,message: 'show All Tasks', data});
   });
 });
+
+
 
 module.exports = router; // Export the router
