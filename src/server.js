@@ -6,13 +6,16 @@ const taskServiceRoutes = require('./service/mysql/taskService');
 const snapshotRoutes = require('./api/nvr_snapshot/Snapshot');
 const ftpRoutes = require('./api/ftp/ftp');
 const userRoutes = require('./service/mysql/UserService');
-
+const Connection = require('./service/mysql/Connection');
+const { runFtpRequest } = require('./api/ftp/RunFtp');
 const app = express();
 const port = 3000;
 
 // Enable CORS for all routes
 app.use(cors()); // Mengizinkan semua origin
 app.use(express.json());
+
+runFtpRequest();
 
 app.get('/', (req, res) => {
   res.send('Hello, BANG!');

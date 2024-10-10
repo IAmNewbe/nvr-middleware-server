@@ -1,14 +1,8 @@
 const express = require('express');
-// const ftp = require('basic-ftp');
 const ftp = require("ftp");
 const router = express.Router(); 
-const path = require('path');
-const { imageFetch } = require('../nvr_snapshot/Auth');
-
-// Initialize variables to store the status and counts
-let intervalId;
-let successCount = 0;
-let failedCount = 0;
+const { tesImageFetch } = require('../nvr_snapshot/Auth');
+const Connection = require('../../service/mysql/Connection');
 
 // Function to upload a stream directly to FTP
 async function uploadStreamToFtp(stream, fileName, ftpConfig, res) {
@@ -48,7 +42,7 @@ router.post('/test-upload-image', async (req, res) => {
       passive: true,
     };
    
-    const response = await imageFetch(server, port, username, password, prefix, res);
+    const response = await tesImageFetch(server, port, username, password, prefix, res);
      
     console.log(Buffer.from(response.data));
     const nameImg = new Date().toISOString();
@@ -62,122 +56,46 @@ router.post('/test-upload-image', async (req, res) => {
     
 });
 
-// Route to start the upload process
-router.post('/upload-image', async (req, res) => {
-  res.send('ini Upload Image');
+router.put('/run-task-by-id/:id', async (req, res) => {
   try {
-    // const {
-    //   server,
-    //   port,
-    //   username,
-    //   password,
-    //   prefix,
-    //   ftp_url,
-    //   ftp_port,
-    //   ftp_user,
-    //   ftp_pass,
-    //   ftp_dir,
-    //   send_interval,
-    // } = req.body.data;
-    
-    const server = "36.92.168.180"
-    const port = 10180
-    const username = "admin"
-    const password = "telkomiot123"
-    const prefix = "cgi-bin/snapshot.cgi?channel=4&subtype=2"
-    const ftp_url = "antarescam.id"
-    const ftp_port = 21
-    const ftp_user = "CCTV01KGqdwvRKHGnW"
-    const ftp_pass = "lLZWZFhcdzaV"
-    const ftp_dir = "/"
-    const send_interval = 5000
-    
+    // Extract the task ID from the URL parameters
+    const { id } = req.params;
 
-    const ftpConfig = {
-      host: ftp_url,
-      port: ftp_port,
-      user: ftp_user,
-      password: ftp_pass,
-      passive: true,
-    };
+    // Extract the boolean value (1 or 0) from the request body
+    const { status } = req.body;
 
-    // Clear any existing intervals to prevent multiple intervals running
-    clearInterval(intervalId);
+    // Validate that the status is either 1 or 0
+    if (status !== 1 && status !== 0) {
+      return res.status(400).json({ message: 'Invalid status value. Must be 1 or 0.' });
+    }
 
-    // Set the upload status to Running
-    await updateTaskStatus(server, port, username, password, prefix, ftp_url, ftp_port, ftp_user, ftp_pass, ftp_dir, send_interval, true, successCount, failedCount);
+    // SQL query to update the status of the task
+    const updateSql = `
+      UPDATE task_list
+      SET status = ?
+      WHERE id = ?;
+    `;
 
-    // Start the interval for sending images
-    intervalId = setInterval(async () => {
-      try {
-        // Fetch the image from the server
-        const response = await imageFetch(server, port, username, password, prefix, res);
-        console.log(response);
-        // Prepare the image name
-        const nameImg = new Date().toISOString();
-
-        // Use the response body stream directly for FTP upload
-        await uploadStreamToFtp(response.data, `/${nameImg}.jpg`, ftpConfig);
-
-        // Increment success count
-        successCount++;
-        console.log(`Successfully uploaded: ${nameImg}.jpg`);
-
-        // Update the database with the new success count
-        await updateTaskStatus(server, port, username, password, prefix, ftp_url, ftp_port, ftp_user, ftp_pass, ftp_dir, send_interval, true, successCount, failedCount);
-      } catch (error) {
-        // Increment failed count on error
-        failedCount++;
-        console.error(`Failed to upload image: ${error.message}`);
-
-        // Update the database with the new failed count
-        // await updateTaskStatus(server, port, username, password, prefix, ftp_url, ftp_port, ftp_user, ftp_pass, ftp_dir, send_interval, true, successCount, failedCount);
+    // Execute the query with the new status and the task ID
+    Connection.query(updateSql, [status, id], (err, result) => {
+      if (err) {
+        console.error(`Error updating task status for task with id: ${id}`, err.message);
+        return res.status(500).json({ message: 'Failed to update task status' });
       }
-    }, send_interval); // Set the interval based on send_interval from request
 
-    // Respond to the client with the current status
-    res.json({
-      status: true,
-      success: successCount,
-      failed: failedCount,
+      // Check if any rows were affected (to ensure the task exists)
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ message: 'Task not found' });
+      }
+
+      // Send success response
+      res.status(200).json({ message: `Task with id: ${id} updated successfully`, newStatus: status });
     });
   } catch (error) {
-    console.error('Error in image ftp.js fetching process:', error);
-    res.status(500).send('Error in image ftp.js fetching process');
+    console.error(`Error in PUT request for updating task status:`, error);
+    res.status(500).json({ message: 'Internal Server Error' });
   }
-});
-
-// Function to update task status in MySQL
-const updateTaskStatus = (server, port, username, password, prefix, ftp_url, ftp_port, ftp_user, ftp_pass, ftp_dir, send_interval, status, success, failed) => {
-  const sql = `
-    INSERT INTO taskslist (server, port, username, password, prefix, ftp_url, ftp_port, ftp_user, ftp_pass, ftp_dir, send_interval, status, success, failed)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ON DUPLICATE KEY UPDATE 
-      status = VALUES(status),
-      success = VALUES(success),
-      failed = VALUES(failed)
-  `;
-
-  const values = [server, port, username, password, prefix, ftp_url, ftp_port, ftp_user, ftp_pass, ftp_dir, send_interval, status, success, failed];
-
-  return new Promise((resolve, reject) => {
-    db.query(sql, values, (err) => {
-      if (err) {
-        console.error('Error updating task status in database:', err);
-        reject(err);
-      } else {
-        console.log('Task status updated successfully');
-        resolve();
-      }
-    });
-  });
-};
-
-// Route to stop the upload process
-router.post('/stop-upload', (req, res) => {
-  clearInterval(intervalId);
-  res.send('Upload process has been stopped.');
-});
+})
 
 module.exports = router;
 

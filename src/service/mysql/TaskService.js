@@ -47,7 +47,8 @@ router.post('/postTaskById', (req, res) => {
     // Execute the query
     Connection.query(sql, values, (err, results) => {
       if (err) {
-        return console.error('Error inserting data:', err.message);
+        console.error('Error inserting data:', err.message);
+        res.status(500).json({ status: res.statusCode ,message: err.message });
       }
     });
     // Send a JSON response with the newly added task
