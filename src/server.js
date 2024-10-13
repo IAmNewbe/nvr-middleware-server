@@ -1,6 +1,4 @@
 const express = require('express');
-const axios = require('axios');
-const crypto = require('crypto');
 const cors = require('cors');
 const taskServiceRoutes = require('./service/mysql/taskService');
 const snapshotRoutes = require('./api/nvr_snapshot/Snapshot');
