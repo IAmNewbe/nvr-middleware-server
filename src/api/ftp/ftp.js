@@ -3,6 +3,7 @@ const ftp = require("ftp");
 const router = express.Router(); 
 const { tesImageFetch } = require('../nvr_snapshot/Auth');
 const Connection = require('../../service/mysql/Connection');
+const { runFtpRequest, stopFtpTask } = require('./RunFtp');
 
 // Function to upload a stream directly to FTP
 async function uploadStreamToFtp(stream, fileName, ftpConfig, res) {
@@ -56,46 +57,57 @@ router.post('/test-upload-image', async (req, res) => {
     
 });
 
-router.put('/run-task-by-id/:id', async (req, res) => {
+// Route to toggle task status
+router.put('/toggle-task-status/:id', async (req, res) => {
+  const taskId = req.params.id;
+  console.log(req);
+  // const newStatus = req.body.status; // The new status (0 or 1)
+
   try {
-    // Extract the task ID from the URL parameters
-    const { id } = req.params;
+    // Find the current status of the task by id
+    const queryGetStatus = `SELECT status FROM task_list WHERE id = ?`;
 
-    // Extract the boolean value (1 or 0) from the request body
-    const { status } = req.body;
-
-    // Validate that the status is either 1 or 0
-    if (status !== 1 && status !== 0) {
-      return res.status(400).json({ message: 'Invalid status value. Must be 1 or 0.' });
-    }
-
-    // SQL query to update the status of the task
-    const updateSql = `
-      UPDATE task_list
-      SET status = ?
-      WHERE id = ?;
-    `;
-
-    // Execute the query with the new status and the task ID
-    Connection.query(updateSql, [status, id], (err, result) => {
+    Connection.query(queryGetStatus, [taskId], (err, result) => {
       if (err) {
-        console.error(`Error updating task status for task with id: ${id}`, err.message);
-        return res.status(500).json({ message: 'Failed to update task status' });
+        console.error('Error fetching task status:', err.message);
+        return res.status(500).json({ error: 'Error fetching task status' });
       }
 
-      // Check if any rows were affected (to ensure the task exists)
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ message: 'Task not found' });
+      if (result.length === 0) {
+        return res.status(404).json({ error: 'Task not found' });
       }
 
-      // Send success response
-      res.status(200).json({ message: `Task with id: ${id} updated successfully`, newStatus: status });
+      // Get current status (assuming it's a boolean or tinyint(1))
+      const currentStatus = result[0].status;
+
+      // Toggle the status: 1 to 0 or 0 to 1
+      const newStatus = currentStatus === 1 ? 0 : 1;
+
+      // Update the task status in the database
+      const updateSql = `UPDATE task_list SET status = ? WHERE id = ?`;
+     
+      Connection.query(updateSql, [newStatus, taskId], (err, result) => {
+        if (err) {
+          console.error('Error updating task status:', err.message);
+          return res.status(500).json({ error: 'Error updating task status' });
+        }
+        // return res.status(200).json({ success: true, newStatus, message: 'Task status updated successfully' });
+      });
+
+      // If the new status is 0, stop the FTP task interval
+      if (newStatus === 0) {
+        stopFtpTask(taskId);
+      } else if (newStatus === 1) {
+        // If the new status is 1, restart the FTP task
+        runFtpRequest(req, res); // Restart the FTP request for active tasks
+      }
+
+      res.json({ success: true, message: `Task ${taskId} status updated to ${newStatus}`, data: newStatus });
     });
   } catch (error) {
-    console.error(`Error in PUT request for updating task status:`, error);
-    res.status(500).json({ message: 'Internal Server Error' });
+    res.status(500).json({ success: false, message: 'Error updating task status' });
   }
-})
+});
 
 module.exports = router;
 
