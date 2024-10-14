@@ -106,7 +106,7 @@ router.put('/editTaskById/:id', (req, res) => {
     taskId // Include the task ID for the WHERE clause
   ];
 
-  // Execute the query
+  // Execute the query  
   Connection.query(sql, values, (err, results) => {
     if (err) {
       console.error('Error updating task:', err.message);
