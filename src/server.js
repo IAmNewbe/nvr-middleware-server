@@ -1,13 +1,16 @@
 const express = require('express');
 const cors = require('cors');
+require('dotenv').config();
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const taskServiceRoutes = require('./service/mysql/taskService');
 const snapshotRoutes = require('./api/nvr_snapshot/Snapshot');
 const ftpRoutes = require('./api/ftp/ftp');
 const userRoutes = require('./service/mysql/UserService');
-const Connection = require('./service/mysql/Connection');
+const authRoutes = require('./service/mysql/AuthenticationsService');
 const { runFtpRequest } = require('./api/ftp/RunFtp');
 const app = express();
-const port = 3000;
+const port = process.env.PORT;
 
 // Enable CORS for all routes
 app.use(cors()); // Mengizinkan semua origin
@@ -18,6 +21,8 @@ runFtpRequest();
 app.get('/', (req, res) => {
   res.send('Hello, BANG!');
 })
+
+app.use(authRoutes);
 
 app.use(taskServiceRoutes);
 
