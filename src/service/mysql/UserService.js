@@ -3,12 +3,13 @@ const express = require('express');
 const router = express.Router(); // Create a router instance
 const Connection = require('./Connection');
 const bcrypt = require('bcryptjs');
-const { authenticateJWT } = require('../../api/authentications/authentication');
+const { authenticateJWT, authorizeRoles } = require('../../api/authentications/authentication');
 
 // POST route to handle adding a task
-router.post('/postUserById', authenticateJWT, async (req, res) => {
+router.post('/postUserById', authenticateJWT, authorizeRoles(['admin']),async (req, res) => {
   try {
     const userData = req.body;
+    console.log(userData);
     const hashedPassword = await bcrypt.hash(userData.password, 10);
     const id = nanoid(16);
     const created_at = new Date().toISOString();
@@ -68,7 +69,7 @@ router.get('/getAllUsers', (req, res) => {
 })
 
 // DELETE route to delete a user by ID
-router.delete('/deleteUser/:username', authenticateJWT,(req, res) => {
+router.delete('/deleteUser/:username', authenticateJWT, authorizeRoles(['admin']),(req, res) => {
   try {
     const userId = req.params.username; // Get the user ID from the request parameters
 
