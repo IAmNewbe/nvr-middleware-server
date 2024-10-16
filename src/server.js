@@ -3,7 +3,7 @@ const cors = require('cors');
 require('dotenv').config();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const taskServiceRoutes = require('./service/mysql/taskService');
+const taskServiceRoutes = require('./service/mysql/TaskService');
 const snapshotRoutes = require('./api/nvr_snapshot/Snapshot');
 const ftpRoutes = require('./api/ftp/ftp');
 const userRoutes = require('./service/mysql/UserService');
