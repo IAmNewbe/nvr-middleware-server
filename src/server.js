@@ -10,6 +10,8 @@ const userRoutes = require('./service/mysql/UserService');
 const authRoutes = require('./service/mysql/AuthenticationsService');
 const { runFtpRequest } = require('./api/ftp/RunFtp');
 const app = express();
+
+const host = process.env.BASEURL;
 const port = process.env.PORT;
 
 // Enable CORS for all routes
